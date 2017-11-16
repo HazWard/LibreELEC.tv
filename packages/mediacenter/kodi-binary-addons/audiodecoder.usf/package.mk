@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="audiodecoder.usf"
-PKG_VERSION="ce4b75c"
-PKG_REV="1"
+PKG_VERSION="99c17c9"
+PKG_SHA256="247c60a16afbf9e9ad082db303ec88eecaffced49fd921776ce492f22b154e6a"
+PKG_REV="2"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/notspiff/audiodecoder.usf"
 PKG_URL="https://github.com/notspiff/audiodecoder.usf/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="audiodecoder.usf"
 PKG_LONGDESC="audiodecoder.usf"
@@ -33,19 +33,3 @@ PKG_AUTORECONF="no"
 PKG_IS_ADDON="yes"
 PKG_ADDON_TYPE="kodi.audiodecoder"
 PKG_ADDON_PROJECTS="Generic Nvidia_Legacy RPi2 imx6 WeTek_Play"
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
-}

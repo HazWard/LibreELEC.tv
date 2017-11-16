@@ -18,19 +18,16 @@
 
 PKG_NAME="damageproto"
 PKG_VERSION="1.2.1"
-PKG_REV="1"
+PKG_SHA256="5c7c112e9b9ea8a9d5b019e5f17d481ae20f766cb7a4648360e7c1b46fc9fc5b"
 PKG_ARCH="any"
 PKG_LICENSE="OSS"
 PKG_SITE="http://www.X.org"
 PKG_URL="http://xorg.freedesktop.org/archive/individual/proto/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_TARGET="toolchain util-macros"
-PKG_PRIORITY="optional"
 PKG_SECTION="x11/proto"
 PKG_SHORTDESC="damageproto: Damage extension header"
 PKG_LONGDESC="Damage extension headers"
-
-PKG_IS_ADDON="no"
-PKG_AUTORECONF="yes"
+PKG_AUTORECONF="no"
 
 # package specific configure options
 PKG_CONFIGURE_OPTS_TARGET="--without-xmlto"

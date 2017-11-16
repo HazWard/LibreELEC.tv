@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="screensaver.asteroids"
-PKG_VERSION="0fc066d"
-PKG_REV="1"
+PKG_VERSION="2418981"
+PKG_SHA256="f69ce2b58494f7ba8e714c9c8f738661e0d9ff56fc96dcec225295a1359748c9"
+PKG_REV="2"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/notspiff/screensaver.asteroids"
 PKG_URL="https://github.com/notspiff/screensaver.asteroids/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="screensaver.asteroids"
 PKG_LONGDESC="screensaver.asteroids"
@@ -36,19 +36,3 @@ PKG_ADDON_TYPE="xbmc.ui.screensaver"
 if [ "$OPENGL" = "no" ] ; then
   exit 0
 fi
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
-}

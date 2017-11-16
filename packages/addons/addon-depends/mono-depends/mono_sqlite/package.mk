@@ -1,6 +1,6 @@
 ################################################################################
 #      This file is part of LibreELEC - https://libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -29,4 +29,8 @@ PKG_CONFIGURE_OPTS_TARGET="$PKG_CONFIGURE_OPTS_TARGET --disable-static --enable-
 unpack() {
   mkdir -p $PKG_BUILD
   cp -r $(get_build_dir sqlite)/* $PKG_BUILD/
+}
+
+makeinstall_target() {
+  make install DESTDIR=$INSTALL
 }

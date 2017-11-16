@@ -1,6 +1,6 @@
 ################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,12 @@
 
 PKG_NAME="mesa-demos"
 PKG_VERSION="8.3.0"
-PKG_REV="0"
+PKG_SHA256="c173154bbd0d5fb53d732471984def42fb1b14ac85fcb834138fb9518b3e0bef"
 PKG_ARCH="i386 x86_64"
 PKG_LICENSE="OSS"
 PKG_SITE="http://www.mesa3d.org/"
 PKG_URL="ftp://ftp.freedesktop.org/pub/mesa/demos/$PKG_VERSION/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_TARGET="toolchain libX11 mesa glu glew"
-PKG_PRIORITY="optional"
 PKG_SECTION="tools"
 PKG_SHORTDESC="mesa-demos: Mesa 3D demos"
 PKG_LONGDESC="Mesa 3D demos - installed are the well known glxinfo and glxgears."

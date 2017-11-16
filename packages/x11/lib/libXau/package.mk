@@ -18,19 +18,16 @@
 
 PKG_NAME="libXau"
 PKG_VERSION="1.0.8"
-PKG_REV="1"
+PKG_SHA256="fdd477320aeb5cdd67272838722d6b7d544887dfe7de46e1e7cc0c27c2bea4f2"
 PKG_ARCH="any"
 PKG_LICENSE="OSS"
 PKG_SITE="http://www.X.org"
 PKG_URL="http://xorg.freedesktop.org/archive/individual/lib/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_TARGET="toolchain util-macros xproto"
-PKG_PRIORITY="optional"
 PKG_SECTION="x11/lib"
 PKG_SHORTDESC="libXau: X authorization file management libary"
 PKG_LONGDESC="X authorization file management libary"
-
-PKG_IS_ADDON="no"
-PKG_AUTORECONF="yes"
+PKG_AUTORECONF="no"
 
 PKG_CONFIGURE_OPTS_TARGET="--enable-static --disable-shared --enable-xthreads"
 

@@ -1,6 +1,6 @@
 ################################################################################
-#      This file is part of LibreELEC - https://LibreELEC.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,17 +18,15 @@
 
 PKG_NAME="irqbalanced"
 PKG_VERSION="7f31046"
-PKG_REV="1"
+PKG_SHA256="e9f533bc2186fcef8456b78fb404ac981836d19f4b6ff10fede830b1df421717"
 PKG_ARCH="arm"
 PKG_LICENSE="other"
 PKG_SITE="http://www.freescale.com"
 PKG_URL="https://github.com/dv1/irqbalanced/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain systemd glib"
-PKG_PRIORITY="optional"
 PKG_SECTION="system"
 PKG_SHORTDESC="irqbalanced: distribute hardware interrupts across processors on a multiprocessor system."
 PKG_LONGDESC="irqbalanced: distribute hardware interrupts across processors on a multiprocessor system."
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 pre_configure_target() {

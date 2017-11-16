@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="pvr.argustv"
-PKG_VERSION="299088b"
-PKG_REV="1"
+PKG_VERSION="23cc0e8"
+PKG_SHA256="e965a98240f6c7dee277a1a705ac5e26b138b2f1572572aea50bbfef92a54bf3"
+PKG_REV="2"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/kodi-pvr/pvr.argustv/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform jsoncpp"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="pvr.argustv"
 PKG_LONGDESC="pvr.argustv"
@@ -35,20 +35,4 @@ PKG_ADDON_TYPE="xbmc.pvrclient"
 
 pre_configure_target() {
   CXXFLAGS="$CXXFLAGS -Wno-narrowing"
-}
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
 }

@@ -14,6 +14,8 @@ BRANCH="$1"
 while [ $# -gt 1 ]; do
   if [ "${2,,}" == "rebase" ]; then
     REBASE="_rebase"
+  elif [[ ${2,,} =~ [_-]rebase ]]; then
+    REBASE="$2"
   elif [[ ${2} =~ ^[0-9a-f]*$ ]]; then
     BASEREV="${2}"
   fi
@@ -24,10 +26,11 @@ usage()
 {
   local me="$(basename $0)"
 
-  echo "Usage:   ${me} <major.minor>|<major.minor.patch> [rebase] [baserev]"
+  echo "Usage:   ${me} <major.minor>|<major.minor.patch> [[_-]rebase] [baserev]"
   echo
   echo "Example: 4.4 (for rpi-4.4.y) or 4.4.6 - specifying an exact kernel version avoids fetching the upstream repo"
   echo "         4.4 rebase  - use rpi-4.4.y_rebase branch"
+  echo "         4.4 -rebase  - use rpi-4.4.y-rebase branch"
   echo "         4.6-rc6"
   echo "         4.7 523d939ef98fd712632d93a5a2b588e477a7565e"
   echo "         4.7.0"
@@ -80,6 +83,7 @@ elif [ -z "${KERNEL}" ]; then
   BASEREV="linux-stable/linux-${BRANCH}.y"
 else
   BASEREV="$(git log --grep "Linux ${KERNEL}" --pretty=oneline | head -1)"
+  [ -z "${BASEREV}" ] && BASEREV="$(git log --grep "Linux v${KERNEL}" --pretty=oneline | head -1)"
   [ -z "${BASEREV}" ] && { echo "Unable to determine base revision for BRANCH=${BRANCH}, KERNEL=${KERNEL}"; exit 1; }
 
   echo
@@ -111,10 +115,8 @@ echo "git checkout -b somebranch"
 
 echo
 echo "cp /tmp/linux-01-RPi_support.patch projects/RPi/patches/linux/linux-01-RPi_support.patch"
-echo
-echo "cp /tmp/linux-01-RPi_support.patch projects/RPi2/patches/linux/linux-01-RPi_support.patch"
 
 echo
-echo "git commit -am \"RPi/RPi2: update linux support patches for linux ${KERNEL:-${BRANCH}}\""
+echo "git commit -am \"RPi: update linux support patch for linux ${KERNEL:-${BRANCH}}\""
 
 echo

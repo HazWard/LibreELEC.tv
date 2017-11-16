@@ -1,5 +1,5 @@
 ################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
+#      This file is part of LibreELEC - https://libreelec.tv
 #      Copyright (C) 2016 Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
@@ -17,6 +17,9 @@
 ################################################################################
 
 import xbmcgui
+import subprocess
 
-dialog = xbmcgui.Dialog()
-dialog.ok('', 'This is a console-only addon')
+yes = xbmcgui.Dialog().yesno('', 'This is a console-only addon','','Open a terminal window?','No','Yes')
+if yes:
+  subprocess.Popen(["systemd-run","sh","-c",". /etc/profile;exec mrxvt"], shell=False, close_fds=True)
+

@@ -18,24 +18,25 @@
 
 PKG_NAME="v86d"
 PKG_VERSION="0.1.10"
-PKG_REV="1"
+PKG_SHA256="634964ae18ef68c8493add2ce150e3b4502badeb0d9194b4bd81241d25e6735c"
 PKG_ARCH="x86_64"
 PKG_LICENSE="GPL"
 PKG_SITE="http://dev.gentoo.org/~spock/projects/uvesafb/"
 PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_INIT="toolchain gcc:init"
-PKG_PRIORITY="optional"
 PKG_SECTION="system"
 PKG_SHORTDESC="v86d: A userspace helper that runs x86 code in an emulated environment."
 PKG_LONGDESC="v86d is the userspace helper that runs x86 code in an emulated environment. uvesafb will not work without v86d. v86d currently supports the x86 and amd64 (x86-64) architectures."
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 INIT_CONFIGURE_OPTS="--with-x86emu"
 
 pre_configure_init() {
 # v86d fails to build in subdirs
-  cd $ROOT/$PKG_BUILD
+  cd $PKG_BUILD
     rm -rf .$TARGET_NAME-init
+}
+
+makeinstall_init() {
+  DESTDIR=$INSTALL/usr make install
 }

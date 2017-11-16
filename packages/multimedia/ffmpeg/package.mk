@@ -17,28 +17,25 @@
 ################################################################################
 
 PKG_NAME="ffmpeg"
-# Current branch is: release/3.1-xbmc
-PKG_VERSION="6da2f5f"
-PKG_REV="1"
+# Current branch is: release/3.4-kodi
+PKG_VERSION="d056a4c"
+PKG_SHA256="c041ac2837473fdafbcbc2605d4104f7a3b9ba4d19e21a27487e3eb8581f7b6c"
 PKG_ARCH="any"
 PKG_LICENSE="LGPLv2.1+"
 PKG_SITE="https://ffmpeg.org"
 PKG_URL="https://github.com/xbmc/FFmpeg/archive/${PKG_VERSION}.tar.gz"
 PKG_SOURCE_DIR="FFmpeg-${PKG_VERSION}*"
-PKG_DEPENDS_TARGET="toolchain yasm:host zlib bzip2 libressl speex"
-PKG_PRIORITY="optional"
+PKG_DEPENDS_TARGET="toolchain yasm:host zlib bzip2 openssl speex"
 PKG_SECTION="multimedia"
 PKG_SHORTDESC="FFmpeg is a complete, cross-platform solution to record, convert and stream audio and video."
 PKG_LONGDESC="FFmpeg is a complete, cross-platform solution to record, convert and stream audio and video."
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 # Dependencies
 get_graphicdrivers
 
 if [ "$VAAPI_SUPPORT" = "yes" ]; then
-  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET libva-intel-driver"
+  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET intel-vaapi-driver"
   FFMPEG_VAAPI="--enable-vaapi"
 else
   FFMPEG_VAAPI="--disable-vaapi"
@@ -70,21 +67,18 @@ case "$TARGET_ARCH" in
     ;;
 esac
 
-case "$TARGET_FPU" in
-  neon*)
-    FFMPEG_FPU="--enable-neon"
-    ;;
-  *)
-    FFMPEG_FPU="--disable-neon"
-    ;;
-esac
+if target_has_feature neon; then
+  FFMPEG_FPU="--enable-neon"
+else
+  FFMPEG_FPU="--disable-neon"
+fi
 
 if [ "$DISPLAYSERVER" = "x11" ]; then
   FFMPEG_X11GRAB="--enable-indev=x11grab_xcb"
 fi
 
 pre_configure_target() {
-  cd $ROOT/$PKG_BUILD
+  cd $PKG_BUILD
   rm -rf .$TARGET_NAME
 
 # ffmpeg fails building for x86_64 with LTO support
@@ -92,7 +86,6 @@ pre_configure_target() {
 
 # ffmpeg fails running with GOLD support
   strip_gold
-
 
   if [ "$KODIPLAYER_DRIVER" = "bcm2835-driver" ]; then
     CFLAGS="-I$SYSROOT_PREFIX/usr/include/interface/vcos/pthreads -I$SYSROOT_PREFIX/usr/include/interface/vmcs_host/linux -DRPI=1 $CFLAGS"
@@ -117,7 +110,6 @@ configure_target() {
               --host-cc="$HOST_CC" \
               --host-cflags="$HOST_CFLAGS" \
               --host-ldflags="$HOST_LDFLAGS" \
-              --host-libs="-lm" \
               --extra-cflags="$CFLAGS" \
               --extra-ldflags="$LDFLAGS" \
               --extra-libs="$FFMPEG_LIBS" \
@@ -125,12 +117,12 @@ configure_target() {
               --enable-shared \
               --enable-gpl \
               --disable-version3 \
-              --disable-nonfree \
+              --enable-nonfree \
               --enable-logging \
               --disable-doc \
               $FFMPEG_DEBUG \
               --enable-pic \
-              --pkg-config="$ROOT/$TOOLCHAIN/bin/pkg-config" \
+              --pkg-config="$TOOLCHAIN/bin/pkg-config" \
               --enable-optimizations \
               --disable-extra-warnings \
               --disable-ffprobe \
@@ -161,7 +153,6 @@ configure_target() {
               --disable-dxva2 \
               --enable-runtime-cpudetect \
               $FFMPEG_TABLES \
-              --disable-memalign-hack \
               --disable-encoders \
               --enable-encoder=ac3 \
               --enable-encoder=aac \
@@ -190,14 +181,11 @@ configure_target() {
               --disable-libopencore-amrwb \
               --disable-libopencv \
               --disable-libdc1394 \
-              --disable-libfaac \
               --disable-libfreetype \
               --disable-libgsm \
               --disable-libmp3lame \
-              --disable-libnut \
               --disable-libopenjpeg \
               --disable-librtmp \
-              --disable-libschroedinger \
               --enable-libspeex \
               --disable-libtheora \
               --disable-libvo-amrwbenc \

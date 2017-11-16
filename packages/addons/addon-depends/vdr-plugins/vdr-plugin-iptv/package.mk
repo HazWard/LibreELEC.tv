@@ -18,18 +18,15 @@
 
 PKG_NAME="vdr-plugin-iptv"
 PKG_VERSION="2226be2"
-PKG_REV="1"
+PKG_SHA256="8c8297a6834cc7104901b256a4b31dfb25f3956ce3c4837c7ffb8ddf0507d09b"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.saunalahti.fi/~rahrenbe/vdr/iptv/"
 PKG_URL="https://github.com/rofafor/vdr-plugin-iptv/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain vdr curl"
-PKG_PRIORITY="optional"
 PKG_SECTION="multimedia"
 PKG_SHORTDESC="vdr-iptv: an IPTV plugin for the Video Disk Recorder (VDR)"
 PKG_LONGDESC="vdr-iptv is an IPTV plugin for the Video Disk Recorder (VDR)"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 make_target() {
@@ -48,7 +45,7 @@ post_make_target() {
   VDR_APIVERSION=`sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$/\1/p' $VDR_DIR/config.h`
   LIB_NAME=lib${PKG_NAME/-plugin/}
 
-  cp --remove-destination $ROOT/$PKG_BUILD/${LIB_NAME}.so $ROOT/$PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
+  cp --remove-destination $PKG_BUILD/${LIB_NAME}.so $PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
   $STRIP libvdr-*.so*
 }
 

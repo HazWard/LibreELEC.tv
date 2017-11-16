@@ -26,20 +26,23 @@ if [ -z "$1" ]; then
 fi
 
 if [ ! -f $PKG_DIR/package.mk ]; then
-  printf "${boldred}$1: no package.mk file found${endcolor}\n"
+  printf "$(print_color CLR_ERROR "$1: no package.mk file found")\n"
   exit 1
 fi
 
 # set defaults
-  PKG_CONFIGURE_SCRIPT=""
-  PKG_MAKE_OPTS=""
-  PKG_MAKEINSTALL_OPTS=""
+PKG_CONFIGURE_SCRIPT=""
+PKG_MAKE_OPTS=""
+PKG_MAKEINSTALL_OPTS=""
 
-  PACKAGE_NAME=$(echo $1 | awk -F : '{print $1}')
-  TARGET=$(echo $1 | awk -F : '{print $2}')
-  if [ -z "$TARGET" ]; then
-    TARGET="target"
-  fi
+if [ "${1//:/}" != "${1}" ]; then
+  PACKAGE_NAME="${1%:*}"
+  TARGET="${1#*:}"
+else
+  PACKAGE_NAME=$1
+  TARGET=
+fi
+[ -z "$TARGET" ] && TARGET="target"
 
 if [ -n "$PKG_ARCH" -a ! "$PKG_ARCH" = "any" ]; then
   echo "$PKG_ARCH" | grep -q "$TARGET_ARCH" || exit 0
@@ -54,6 +57,7 @@ STAMP=$STAMPS/$PACKAGE_NAME/build_$TARGET
 $SCRIPTS/unpack $PACKAGE_NAME
 
 STAMP_DEPENDS="$PKG_DIR $PKG_NEED_UNPACK $PROJECT_DIR/$PROJECT/patches/$PKG_NAME"
+[ -n "$DEVICE" ] && STAMP_DEPENDS="$STAMP_DEPENDS $PROJECT_DIR/$PROJECT/devices/$DEVICE/patches/$PKG_NAME"
 
 if [ -f $STAMP ] ; then
   . $STAMP
@@ -61,16 +65,16 @@ if [ -f $STAMP ] ; then
   if [ ! "$PKG_DEEPMD5" = "$STAMP_PKG_DEEPMD5" ] ; then
     rm -f $STAMP
   fi
+
+  if [ "$1" = "u-boot" -a ! "$UBOOT_SYSTEM" = "$STAMP_UBOOT_SYSTEM" ]; then
+    rm -f $STAMP
+  fi
 fi
 
 if [ ! -f $STAMP ]; then
   rm -f $STAMP
 
-  if [ "$TARGET" = "bootstrap" -o "$TARGET" = "init" ]; then
-    setup_toolchain target
-  else
-    setup_toolchain $TARGET
-  fi
+  setup_toolchain $TARGET
 
   # unset functions
     unset -f pre_build_target
@@ -118,59 +122,96 @@ if [ ! -f $STAMP ]; then
     unset -f post_makeinstall_bootstrap
 
   # configure TARGET build defaults
-    unset -v TARGET_CONFIGURE_OPTS
     TARGET_CONFIGURE_OPTS="--host=$TARGET_NAME \
                            --build=$HOST_NAME \
                            --prefix=/usr \
                            --bindir=/usr/bin \
                            --sbindir=/usr/sbin \
                            --sysconfdir=/etc \
+                           --libdir=/usr/lib \
                            --libexecdir=/usr/lib \
                            --localstatedir=/var \
                            --disable-static \
                            --enable-shared"
 
+    if [ "$DEBUG" = "yes" ]; then
+      CMAKE_BUILD_TYPE="Debug"
+    else
+      CMAKE_BUILD_TYPE="MinSizeRel"
+    fi
+
+    if [ "$PKG_USE_NINJA" = "no" ]; then
+      CMAKE_GENERATOR=""
+    else
+      CMAKE_GENERATOR="-GNinja \
+                       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    fi
+
+    TARGET_CMAKE_OPTS="$CMAKE_GENERATOR \
+                       -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
+                       -DCMAKE_INSTALL_PREFIX=/usr \
+                       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE"
+
+    if [ "$DEBUG" = "yes" ]; then
+      MESON_BUILD_TYPE="debug"
+    else
+      MESON_BUILD_TYPE="plain"
+    fi
+
+    TARGET_MESON_OPTS="--prefix=/usr \
+                       --bindir=/usr/bin \
+                       --sbindir=/usr/sbin \
+                       --sysconfdir=/etc \
+                       --libdir=/usr/lib \
+                       --libexecdir=/usr/lib \
+                       --localstatedir=/var \
+                       --buildtype=$MESON_BUILD_TYPE \
+                       --cross-file=$MESON_CONF"
+
   # configure HOST build defaults
-    unset -v HOST_CONFIGURE_OPTS
     HOST_CONFIGURE_OPTS="--host=$HOST_NAME \
                          --build=$HOST_NAME \
-                         --prefix=$ROOT/$TOOLCHAIN \
-                         --bindir=$ROOT/$TOOLCHAIN/bin \
-                         --sbindir=$ROOT/$TOOLCHAIN/sbin \
-                         --sysconfdir=$ROOT/$TOOLCHAIN/etc \
-                         --libexecdir=$ROOT/$TOOLCHAIN/lib \
-                         --localstatedir=$ROOT/$TOOLCHAIN/var \
+                         --prefix=$TOOLCHAIN \
+                         --bindir=$TOOLCHAIN/bin \
+                         --sbindir=$TOOLCHAIN/sbin \
+                         --sysconfdir=$TOOLCHAIN/etc \
+                         --libexecdir=$TOOLCHAIN/lib \
+                         --localstatedir=$TOOLCHAIN/var \
                          --disable-static \
                          --enable-shared"
+
+    HOST_CMAKE_OPTS="$CMAKE_GENERATOR \
+                     -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
+                     -DCMAKE_INSTALL_PREFIX=$TOOLCHAIN"
+
+    HOST_MESON_OPTS="--prefix=$TOOLCHAIN \
+                     --bindir=$TOOLCHAIN/bin \
+                     --sbindir=$TOOLCHAIN/sbin \
+                     --sysconfdir=$TOOLCHAIN/etc \
+                     --libdir=$TOOLCHAIN/lib \
+                     --libexecdir=$TOOLCHAIN/lib \
+                     --localstatedir=$TOOLCHAIN/var \
+                     --buildtype=plain \
+                     --cross-file=$MESON_CONF"
 
   # configure INIT build defaults
-    unset -v INIT_CONFIGURE_OPTS
-    INIT_CONFIGURE_OPTS="--host=$TARGET_NAME \
-                         --build=$HOST_NAME \
-                         --prefix=/usr \
-                         --bindir=/usr/bin \
-                         --sbindir=/usr/sbin \
-                         --sysconfdir=/etc \
-                         --libexecdir=/usr/lib \
-                         --localstatedir=/var \
-                         --disable-static \
-                         --enable-shared"
+    INIT_CONFIGURE_OPTS="$TARGET_CONFIGURE_OPTS"
+    INIT_CMAKE_OPTS="$TARGET_CMAKE_OPTS"
+    INIT_MESON_OPTS="$TARGET_MESON_OPTS"
 
   # configure BOOTSTRAP build defaults
-    unset -v BOOTSTRAP_CONFIGURE_OPTS
-    BOOTSTRAP_CONFIGURE_OPTS="--host=$TARGET_NAME \
-                              --build=$HOST_NAME \
-                              --prefix=/usr \
-                              --bindir=/usr/bin \
-                              --sbindir=/usr/sbin \
-                              --sysconfdir=/etc \
-                              --libexecdir=/usr/lib \
-                              --localstatedir=/var \
-                              --disable-static \
-                              --enable-shared"
+    BOOTSTRAP_CONFIGURE_OPTS="$HOST_CONFIGURE_OPTS"
+    BOOTSTRAP_CMAKE_OPTS="$HOST_CMAKE_OPTS"
+    BOOTSTRAP_MESON_OPTS="$HOST_MESON_OPTS"
 
   # include buildfile
     . $PKG_DIR/package.mk
+
+    if [ "$PKG_IS_KERNEL_PKG" = "yes" ]; then
+      if [ "$TARGET_KERNEL_ARCH" = "arm64" -a "$TARGET_ARCH" = "arm" ]; then
+        TARGET_PREFIX=$TOOLCHAIN/lib/gcc-linaro-aarch64-linux-gnu/bin/aarch64-linux-gnu-
+      fi
+    fi
 
     if [ "$TARGET" = "target" ]; then
       for p in $PKG_DEPENDS_TARGET; do
@@ -190,7 +231,7 @@ if [ ! -f $STAMP ]; then
       done
     fi
 
-    printf "%${BUILD_INDENT}c ${boldyellow}BUILD${endcolor}    $PACKAGE_NAME ${boldwhite}($TARGET)${endcolor}\n" ' '>&$SILENT_OUT
+    printf "%${BUILD_INDENT}c $(print_color CLR_BUILD "BUILD")    $PACKAGE_NAME $(print_color CLR_TARGET "($TARGET)")\n" ' '>&$SILENT_OUT
     export BUILD_INDENT=$((${BUILD_INDENT:-1}+$BUILD_INDENT_SIZE))
 
     if [ "$PKG_AUTORECONF" = yes ]; then
@@ -202,9 +243,9 @@ if [ ! -f $STAMP ]; then
 
       # configure other variables
       if [ "$TARGET" = "target" ]; then
-        INSTALL=$ROOT/$PKG_BUILD/.install_pkg
+        INSTALL=$PKG_BUILD/.install_pkg
       elif [ "$TARGET" = "init" ]; then
-        INSTALL=$ROOT/$PKG_BUILD/.install_init
+        INSTALL=$PKG_BUILD/.install_init
       fi
 
        # clean up
@@ -216,14 +257,16 @@ if [ ! -f $STAMP ]; then
 
       # setup configure script
       if [ -z "$PKG_CONFIGURE_SCRIPT" ]; then
-        PKG_CONFIGURE_SCRIPT="$ROOT/$PKG_BUILD/configure"
+        PKG_CONFIGURE_SCRIPT="$PKG_BUILD/configure"
       else
-        PKG_CONFIGURE_SCRIPT="$ROOT/$PKG_BUILD/$PKG_CONFIGURE_SCRIPT"
+        PKG_CONFIGURE_SCRIPT="$PKG_BUILD/$PKG_CONFIGURE_SCRIPT"
       fi
       if [ -z "$PKG_CMAKE_SCRIPT" ]; then
-        PKG_CMAKE_SCRIPT="$ROOT/$PKG_BUILD/CMakeLists.txt"
-      else
-        PKG_CMAKE_SCRIPT="$ROOT/$PKG_BUILD/$PKG_CMAKE_SCRIPT"
+        PKG_CMAKE_SCRIPT="$PKG_BUILD/CMakeLists.txt"
+      fi
+
+      if [ -z "$PKG_MESON_SCRIPT" ]; then
+        PKG_MESON_SCRIPT="$PKG_BUILD/meson.build"
       fi
 
       # include build template and build
@@ -239,24 +282,24 @@ if [ ! -f $STAMP ]; then
       cd $PKG_BUILD
 
       if [ "$TARGET" = "target" ]; then
-        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" ]; then
+        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" -o -f "$PKG_MESON_SCRIPT" ]; then
           mkdir -p .$TARGET_NAME
           cd .$TARGET_NAME
         fi
       elif [ "$TARGET" = "host" ]; then
-        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" ]; then
+        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" -o -f "$PKG_MESON_SCRIPT" ]; then
           mkdir -p .$HOST_NAME
           cd .$HOST_NAME
         fi
       elif [ "$TARGET" = "init" ]; then
-        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" ]; then
-          mkdir -p .$TARGET_NAME-init
-          cd .$TARGET_NAME-init
+        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" -o -f "$PKG_MESON_SCRIPT" ]; then
+          mkdir -p .$TARGET_NAME-$TARGET
+          cd .$TARGET_NAME-$TARGET
         fi
       elif [ "$TARGET" = "bootstrap" ]; then
-        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" ]; then
-          mkdir -p .$TARGET_NAME-bootstrap
-          cd .$TARGET_NAME-bootstrap
+        if [ -f "$PKG_CONFIGURE_SCRIPT" -o -f "$PKG_CMAKE_SCRIPT" -o -f "$PKG_MESON_SCRIPT" ]; then
+          mkdir -p .$HOST_NAME-$TARGET
+          cd .$HOST_NAME-$TARGET
         fi
       fi
 
@@ -266,14 +309,46 @@ if [ ! -f $STAMP ]; then
       fi
       if [ "$(type -t configure_$TARGET)" = "function" ]; then
         configure_$TARGET
+      elif [ -f "$PKG_MESON_SCRIPT" -a ! "$PKG_USE_MESON" = "no" ]; then
+        if [ "$TARGET" = "target" ]; then
+          echo "Executing (target): meson $TARGET_MESON_OPTS $PKG_MESON_OPTS_TARGET $(dirname $PKG_MESON_SCRIPT)" | tr -s " "
+          meson $TARGET_MESON_OPTS $PKG_MESON_OPTS_TARGET $(dirname $PKG_MESON_SCRIPT)
+        elif [ "$TARGET" = "host" ]; then
+          echo "Executing (host): meson $HOST_MESON_OPTS $PKG_MESON_OPTS_HOST $(dirname $PKG_MESON_SCRIPT)" | tr -s " "
+          meson $HOST_MESON_OPTS $PKG_MESON_OPTS_HOST $(dirname $PKG_MESON_SCRIPT)
+        elif [ "$TARGET" = "init" ]; then
+          echo "Executing (init): meson $INIT_MESON_OPTS $PKG_MESON_OPTS_INIT $(dirname $PKG_MESON_SCRIPT)" | tr -s " "
+          meson $INIT_MESON_OPTS $PKG_MESON_OPTS_INIT $(dirname $PKG_MESON_SCRIPT)
+        elif [ "$TARGET" = "bootstrap" ]; then
+          echo "Executing (bootstrap): meson $BOOTSTRAP_MESON_OPTS $PKG_MESON_OPTS_BOOTSTRAP $(dirname $PKG_MESON_SCRIPT)" | tr -s " "
+          meson $BOOTSTRAP_MESON_OPTS $PKG_MESON_OPTS_BOOTSTRAP $(dirname $PKG_MESON_SCRIPT)
+        fi
+      elif [ -f "$PKG_CMAKE_SCRIPT" -a ! "$PKG_USE_CMAKE" = "no" ]; then
+        if [ "$TARGET" = "target" ]; then
+          echo "Executing (target): cmake $TARGET_CMAKE_OPTS $PKG_CMAKE_OPTS_TARGET $(dirname $PKG_CMAKE_SCRIPT)" | tr -s " "
+          cmake $TARGET_CMAKE_OPTS $PKG_CMAKE_OPTS_TARGET $(dirname $PKG_CMAKE_SCRIPT)
+        elif [ "$TARGET" = "host" ]; then
+          echo "Executing (host): cmake $HOST_CMAKE_OPTS $PKG_CMAKE_OPTS_HOST $(dirname $PKG_CMAKE_SCRIPT)" | tr -s " "
+          cmake $HOST_CMAKE_OPTS $PKG_CMAKE_OPTS_HOST $(dirname $PKG_CMAKE_SCRIPT)
+        elif [ "$TARGET" = "init" ]; then
+          echo "Executing (init): cmake $INIT_CMAKE_OPTS $PKG_CMAKE_OPTS_INIT $(dirname $PKG_CMAKE_SCRIPT)" | tr -s " "
+          cmake $INIT_CMAKE_OPTS $PKG_CMAKE_OPTS_INIT $(dirname $PKG_CMAKE_SCRIPT)
+        elif [ "$TARGET" = "bootstrap" ]; then
+          echo "Executing (bootstrap): cmake $BOOTSTRAP_CMAKE_OPTS $PKG_CMAKE_OPTS_BOOTSTRAP $(dirname $PKG_CMAKE_SCRIPT)" | tr -s " "
+          cmake $BOOTSTRAP_CMAKE_OPTS $PKG_CMAKE_OPTS_BOOTSTRAP $(dirname $PKG_CMAKE_SCRIPT)
+        fi
       elif [ -f "$PKG_CONFIGURE_SCRIPT" ]; then
         if [ "$TARGET" = "target" ]; then
+          echo "Executing (target): $PKG_CONFIGURE_SCRIPT $TARGET_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_TARGET" | tr -s " "
           $PKG_CONFIGURE_SCRIPT $TARGET_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_TARGET
         elif [ "$TARGET" = "host" ]; then
+          echo "Executing (host): $PKG_CONFIGURE_SCRIPT $HOST_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_HOST" | tr -s " "
           $PKG_CONFIGURE_SCRIPT $HOST_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_HOST
         elif [ "$TARGET" = "init" ]; then
+          echo "Executing (init): $PKG_CONFIGURE_SCRIPT $INIT_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_INIT" | tr -s " "
           $PKG_CONFIGURE_SCRIPT $INIT_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_INIT
         elif [ "$TARGET" = "bootstrap" ]; then
+          echo "Executing (bootstrap): $PKG_CONFIGURE_SCRIPT $BOOTSTRAP_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_BOOTSTRAP" | tr -s " "
           $PKG_CONFIGURE_SCRIPT $BOOTSTRAP_CONFIGURE_OPTS $PKG_CONFIGURE_OPTS_BOOTSTRAP
         fi
       fi
@@ -287,14 +362,32 @@ if [ ! -f $STAMP ]; then
       fi
       if [ "$(type -t make_$TARGET)" = "function" ]; then
         make_$TARGET
+      elif [ \( -f "$PKG_CMAKE_SCRIPT" -a ! "$PKG_USE_CMAKE" = "no" -a ! "$PKG_USE_NINJA" = "no" \) -o \( -f "$PKG_MESON_SCRIPT" -a ! "$PKG_USE_MESON" = "no" \) ]; then
+        if [ "$TARGET" = "target" ]; then
+          echo "Executing (target): ninja $PKG_MAKE_OPTS_TARGET" | tr -s " "
+          ninja $PKG_MAKE_OPTS_TARGET
+        elif [ "$TARGET" = "host" ]; then
+          echo "Executing (host): ninja $PKG_MAKE_OPTS_HOST" | tr -s " "
+          ninja $PKG_MAKE_OPTS_HOST
+        elif [ "$TARGET" = "init" ]; then
+          echo "Executing (init): ninja $PKG_MAKE_OPTS_INIT" | tr -s " "
+          ninja $PKG_MAKE_OPTS_INIT
+        elif [ "$TARGET" = "bootstrap" ]; then
+          echo "Executing (bootstrap): ninja $PKG_MAKE_OPTS_BOOTSTRAP" | tr -s " "
+          ninja $PKG_MAKE_OPTS_BOOTSTRAP
+        fi
       else
         if [ "$TARGET" = "target" ]; then
+          echo "Executing (target): make $PKG_MAKE_OPTS_TARGET" | tr -s " "
           make $PKG_MAKE_OPTS_TARGET
         elif [ "$TARGET" = "host" ]; then
+          echo "Executing (host): make $PKG_MAKE_OPTS_HOST" | tr -s " "
           make $PKG_MAKE_OPTS_HOST
         elif [ "$TARGET" = "init" ]; then
+          echo "Executing (init): make $PKG_MAKE_OPTS_INIT" | tr -s " "
           make $PKG_MAKE_OPTS_INIT
         elif [ "$TARGET" = "bootstrap" ]; then
+          echo "Executing (bootstrap): make $PKG_MAKE_OPTS_BOOTSTRAP" | tr -s " "
           make $PKG_MAKE_OPTS_BOOTSTRAP
         fi
       fi
@@ -308,6 +401,17 @@ if [ ! -f $STAMP ]; then
       fi
       if [ "$(type -t makeinstall_$TARGET)" = "function" ]; then
         makeinstall_$TARGET
+      elif [ \( -f "$PKG_CMAKE_SCRIPT" -a ! "$PKG_USE_CMAKE" = "no" -a ! "$PKG_USE_NINJA" = "no" \) -o \( -f "$PKG_MESON_SCRIPT"  -a ! "$PKG_USE_MESON" = "no" \) ]; then
+        if [ "$TARGET" = "target" ]; then
+          DESTDIR=$SYSROOT_PREFIX ninja install $PKG_MAKEINSTALL_OPTS_TARGET
+          DESTDIR=$INSTALL ninja install $PKG_MAKEINSTALL_OPTS_TARGET
+        elif [ "$TARGET" = "host" ]; then
+          ninja install $PKG_MAKEINSTALL_OPTS_HOST
+        elif [ "$TARGET" = "init" ]; then
+          DESTDIR=$INSTALL ninja install $PKG_MAKEINSTALL_OPTS_INIT
+        elif [ "$TARGET" = "bootstrap" ]; then
+          ninja install $PKG_MAKEINSTALL_OPTS_BOOTSTRAP
+        fi
       else
         if [ "$TARGET" = "target" ]; then
           $MAKEINSTALL $PKG_MAKEINSTALL_OPTS_TARGET
@@ -317,7 +421,7 @@ if [ ! -f $STAMP ]; then
         elif [ "$TARGET" = "init" ]; then
           make install DESTDIR=$INSTALL $PKG_MAKEINSTALL_OPTS_INIT
         elif [ "$TARGET" = "bootstrap" ]; then
-          $MAKEINSTALL $PKG_MAKEINSTALL_OPTS_BOOTSTRAP
+          make install $PKG_MAKEINSTALL_OPTS_BOOTSTRAP
         fi
       fi
       if [ "$(type -t post_makeinstall_$TARGET)" = "function" ]; then
@@ -325,31 +429,30 @@ if [ ! -f $STAMP ]; then
       fi
 
       if [ "$TARGET" = "target" -o "$TARGET" = "init" ]; then
-       if [ -d $INSTALL ] ; then
-         for i in $INSTALL $INSTALL/usr; do
-            rm -rf $i/include
-            rm -rf $i/lib/cmake
-            rm -rf $i/lib/pkgconfig
-            rm -rf $i/man
-            rm -rf $i/share/aclocal
-            rm -rf $i/share/bash-completion
-            rm -rf $i/share/doc
-            rm -rf $i/share/gtk-doc
-            rm -rf $i/share/info
-            rm -rf $i/share/locale
-            rm -rf $i/share/man
-            rm -rf $i/share/pkgconfig
-            find $i -name "*.la" -exec rm -f "{}" ";" 2>/dev/null || true
-            find $i -name "*.a" -exec rm -f "{}" ";" 2>/dev/null || true
-            find $i -name "*.so*T" -exec rm -f "{}" ";" 2>/dev/null || true
-            # patch backups nonsense
-            find $i -name "*.orig" -exec rm -f "{}" ";" 2>/dev/null || true
-            # kodi / addons nonsense
-            find $i -name "addon.xml.in" -exec rm -f "{}" ";" 2>/dev/null || true
-            find $i -name "Makefile.in" -exec rm -f "{}" ";" 2>/dev/null || true
-          done
-
-          find $INSTALL -type d -exec rmdir -p "{}" ";" 2>/dev/null || true
+        if [ -d $INSTALL ] ; then
+          rm -rf $INSTALL/{usr/,}include
+          rm -rf $INSTALL/{usr/,}lib/cmake
+          rm -rf $INSTALL/{usr/,}lib/pkgconfig
+          rm -rf $INSTALL/{usr/,}man
+          rm -rf $INSTALL/{usr/,}share/aclocal
+          rm -rf $INSTALL/{usr/,}share/bash-completion
+          rm -rf $INSTALL/{usr/,}share/doc
+          rm -rf $INSTALL/{usr/,}share/gtk-doc
+          rm -rf $INSTALL/{usr/,}share/info
+          rm -rf $INSTALL/{usr/,}share/locale
+          rm -rf $INSTALL/{usr/,}share/man
+          rm -rf $INSTALL/{usr/,}share/pkgconfig
+          rm -rf $INSTALL/{usr/,}share/zsh
+          rm -rf $INSTALL/{usr/,}var
+          find $INSTALL \( -name "*.orig" \
+                        -o -name "*.rej" \
+                        -o -name "*.a" \
+                        -o -name "*.la" \
+                        -o -name "*.o" \
+                        -o -name "*.in" \
+                        -o -name ".git*" \) \
+            -exec rm -f {} \; 2>/dev/null || :
+          find $INSTALL -type d -exec rmdir -p {} \; 2>/dev/null || :
 
           if [ ! "$DEBUG" = yes ]; then
             $STRIP `find $INSTALL \
@@ -377,7 +480,10 @@ if [ ! -f $STAMP ]; then
 
     PKG_DEEPMD5=$(find $STAMP_DEPENDS -exec md5sum {} \; 2>/dev/null | sort | md5sum | cut -d" " -f1)
     for i in PKG_NAME PKG_DEEPMD5; do
-      eval val=\$$i
-      echo "STAMP_$i=\"$val\"" >> $STAMP
+      echo "STAMP_$i=\"${!i}\"" >> $STAMP
     done
+
+    if [ "$1" = "u-boot" ]; then
+      echo "STAMP_UBOOT_SYSTEM=\"${UBOOT_SYSTEM}\"" >> $STAMP
+    fi
 fi

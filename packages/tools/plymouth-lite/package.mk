@@ -18,18 +18,15 @@
 
 PKG_NAME="plymouth-lite"
 PKG_VERSION="0.6.0"
-PKG_REV="1"
+PKG_SHA256="fa7b581bdd38c5751668243ff9d2ebaee7c45753358cbb310fb50cfcd3a8081b"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.meego.com"
 PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_INIT="toolchain gcc:init libpng"
-PKG_PRIORITY="optional"
 PKG_SECTION="tools"
 PKG_SHORTDESC="plymouth-lite: Boot splash screen based on Fedora's Plymouth code"
 PKG_LONGDESC="Boot splash screen based on Fedora's Plymouth code"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 if [ "$UVESAFB_SUPPORT" = yes ]; then
@@ -38,13 +35,13 @@ fi
 
 pre_configure_init() {
   # plymouth-lite dont support to build in subdirs
-  cd $ROOT/$PKG_BUILD
+  cd $PKG_BUILD
     rm -rf .$TARGET_NAME-init
 }
 
 makeinstall_init() {
-  mkdir -p $INSTALL/bin
-    cp ply-image $INSTALL/bin
+  mkdir -p $INSTALL/usr/bin
+    cp ply-image $INSTALL/usr/bin
 
   mkdir -p $INSTALL/splash
     if [ -f $PROJECT_DIR/$PROJECT/splash/splash.conf ]; then

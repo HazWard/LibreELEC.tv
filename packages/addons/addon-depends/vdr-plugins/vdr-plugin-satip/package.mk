@@ -17,19 +17,16 @@
 ################################################################################
 
 PKG_NAME="vdr-plugin-satip"
-PKG_VERSION="7815821"
-PKG_REV="1"
+PKG_VERSION="ee88aad"
+PKG_SHA256="340fa7366b63ec6760f41c204a993df336e2f571c2ff6b8cb5517ceccbc0e249"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.saunalahti.fi/~rahrenbe/vdr/satip/"
 PKG_URL="https://github.com/rofafor/vdr-plugin-satip/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain vdr curl tinyxml"
-PKG_PRIORITY="optional"
 PKG_SECTION="multimedia"
 PKG_SHORTDESC="VDR-satip: SAT>IP plugin for VDR"
 PKG_LONGDESC="This is an SAT>IP plugin for the Video Disk Recorder (VDR)."
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 make_target() {
@@ -49,7 +46,7 @@ post_make_target() {
   VDR_APIVERSION=`sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$/\1/p' $VDR_DIR/config.h`
   LIB_NAME=lib${PKG_NAME/-plugin/}
 
-  cp --remove-destination $ROOT/$PKG_BUILD/${LIB_NAME}.so $ROOT/$PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
+  cp --remove-destination $PKG_BUILD/${LIB_NAME}.so $PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
   $STRIP libvdr-*.so*
 }
 

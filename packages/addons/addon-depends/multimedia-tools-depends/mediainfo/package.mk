@@ -1,6 +1,6 @@
 ################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 PKG_NAME="mediainfo"
 PKG_VERSION="0.7.83"
-PKG_REV="1"
+PKG_SHA256="11dfd8aec6607a7fc7da1aff79b3e2bf765ee26787732da0b65d595cb20b9168"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://mediaarea.net/en/MediaInfo/Download/Source"
 PKG_URL="http://mediaarea.net/download/source/mediainfo/$PKG_VERSION/mediainfo_$PKG_VERSION.tar.bz2"
 PKG_SOURCE_DIR="MediaInfo"
 PKG_DEPENDS_TARGET="toolchain libmediainfo"
-PKG_PRIORITY="optional"
 PKG_SECTION="tools"
 PKG_SHORTDESC="MediaInfo is a convenient unified display of the most relevant technical and tag data for video and audio files"
 PKG_LONGDESC="MediaInfo is a convenient unified display of the most relevant technical and tag data for video and audio files"

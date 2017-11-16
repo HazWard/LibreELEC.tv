@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="visualization.waveform"
-PKG_VERSION="a603d10"
-PKG_REV="1"
+PKG_VERSION="8204be7"
+PKG_SHA256="457d861a8ef5a054339effe803b4aae801256282b098db63ae45aa90a9c30c9e"
+PKG_REV="2"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/notspiff/visualization.waveform/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="visualization.waveform"
 PKG_LONGDESC="visualization.waveform"
@@ -32,19 +32,3 @@ PKG_AUTORECONF="no"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_TYPE="xbmc.player.musicviz"
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
-}

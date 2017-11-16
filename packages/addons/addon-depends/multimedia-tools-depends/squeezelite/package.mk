@@ -1,6 +1,6 @@
 ################################################################################
 #      This file is part of LibreELEC - https://libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,25 +17,22 @@
 ################################################################################
 
 PKG_NAME="squeezelite"
-PKG_VERSION="33cca7e"
-PKG_REV="0"
+PKG_VERSION="a3d95ec"
+PKG_SHA256="d5af85ed5673205ce5011898179e355fd387adc77327c45080551ffa9dbf3cf1"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv3"
 PKG_SITE="https://github.com/ralph-irving/squeezelite"
 PKG_URL="https://github.com/ralph-irving/squeezelite/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain faad2 ffmpeg flac libmad libvorbis mpg123 soxr"
 PKG_SECTION="tools"
-PKG_PRIORITY="optional"
 PKG_SHORTDESC="squeezelite"
 PKG_LONGDESC="A client for the Logitech Media Server"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 pre_make_target() {
   OPTS="-DDSD -DFFMPEG -DRESAMPLE -DVISEXPORT"
   CFLAGS="$CFLAGS $OPTS"
-  LDFLAGS="$LDFLAGS -lasound -lpthread -lm -lrt"
+  LDFLAGS="$LDFLAGS -lasound -lpthread -lm -lrt -lFLAC -lmad -lvorbisfile -lfaad -lmpg123"
 }
 
 makeinstall_target() {

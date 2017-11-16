@@ -15,6 +15,7 @@
 
 PKG_NAME="configtools"
 PKG_VERSION="706fbe5"
+PKG_SHA256="185511fd06ccbb892e14d6c593f68f0f1fd7c713b21a8d8bd3c7fd949e9c5979"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://git.savannah.gnu.org/cgit/config.git"
@@ -29,6 +30,6 @@ make_host() {
 }
 
 makeinstall_host() {
-  mkdir -p $ROOT/$TOOLCHAIN/configtools
-  cp config.* $ROOT/$TOOLCHAIN/configtools
+  mkdir -p $TOOLCHAIN/configtools
+  cp config.* $TOOLCHAIN/configtools
 }

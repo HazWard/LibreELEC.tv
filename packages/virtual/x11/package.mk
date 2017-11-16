@@ -18,18 +18,14 @@
 
 PKG_NAME="x11"
 PKG_VERSION=""
-PKG_REV="1"
 PKG_ARCH="any"
 PKG_LICENSE="OSS"
 PKG_SITE="http://www.X.org"
 PKG_URL=""
 PKG_DEPENDS_TARGET="toolchain xorg-server"
-PKG_PRIORITY="optional"
 PKG_SECTION="virtual"
 PKG_SHORTDESC="x11: the Windowing system"
 PKG_LONGDESC="X11 is the Windowing system"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 # Additional packages we need for using xorg-server:
@@ -48,11 +44,11 @@ fi
 
 get_graphicdrivers
 
-# Drivers 
+# Drivers
 if [ -n "$LIBINPUT" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET xf86-input-libinput"
 else
-  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET xf86-input-evdev"
+  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET xf86-input-evdev xf86-input-synaptics"
 fi
 
 for drv in $XORG_DRIVERS; do

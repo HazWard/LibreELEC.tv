@@ -1,6 +1,6 @@
 ################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,14 +17,13 @@
 ################################################################################
 
 PKG_NAME="diffutils"
-PKG_VERSION="3.3"
-PKG_REV="0"
+PKG_VERSION="3.6"
+PKG_SHA256="d621e8bdd4b573918c8145f7ae61817d1be9deb4c8d2328a65cea8e11d783bd6"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.gnu.org/software/diffutils/"
-PKG_URL="ftp://ftp.gnu.org/gnu/diffutils/$PKG_NAME-$PKG_VERSION.tar.xz"
+PKG_URL="http://ftpmirror.gnu.org/diffutils/$PKG_NAME-$PKG_VERSION.tar.xz"
 PKG_DEPENDS_TARGET="toolchain"
-PKG_PRIORITY="optional"
 PKG_SECTION="tools"
 PKG_SHORTDESC="GNU Diffutils"
 PKG_LONGDESC="GNU Diffutils is a package of several programs related to finding differences between files."

@@ -17,19 +17,16 @@
 ################################################################################
 
 PKG_NAME="containerd"
-PKG_VERSION="0ac3cd1"
-PKG_REV="1"
+PKG_VERSION="aa8187d"
+PKG_SHA256="717dc364050f9ad72dcacf02f6fdb062c93ca5fe04f8636ac70ba715e52d3340"
 PKG_ARCH="any"
 PKG_LICENSE="APL"
 PKG_SITE="https://containerd.tools/"
 PKG_URL="https://github.com/docker/containerd/archive/${PKG_VERSION}.tar.gz"
-PKG_DEPENDS_HOST="toolchain go"
-PKG_PRIORITY="optional"
+PKG_DEPENDS_TARGET="toolchain go:host"
 PKG_SECTION="system"
 PKG_SHORTDESC="containerd is a daemon to control runC"
 PKG_LONGDESC="containerd is a daemon to control runC, built for performance and density. containerd leverages runC's advanced features such as seccomp and user namespace support as well as checkpoint and restore for cloning and live migration of containers."
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 pre_make_target() {
@@ -49,19 +46,22 @@ pre_make_target() {
          ;;
       esac
       ;;
+    aarch64)
+      export GOARCH=arm64
+      ;;
   esac
 
   export GOOS=linux
   export CGO_ENABLED=1
   export CGO_NO_EMULATION=1
   export CGO_CFLAGS=$CFLAGS
-  export LDFLAGS="-w -extldflags -static -X github.com/docker/containerd.GitCommit=${PKG_VERSION} -extld $TARGET_CC"
-  export GOLANG=$ROOT/$TOOLCHAIN/lib/golang/bin/go
-  export GOPATH=$ROOT/$PKG_BUILD.gopath:$ROOT/$PKG_BUILD/vendor/
-  export GOROOT=$ROOT/$TOOLCHAIN/lib/golang
+  export LDFLAGS="-w -extldflags -static -X github.com/docker/containerd.GitCommit=${PKG_VERSION} -extld $CC"
+  export GOLANG=$TOOLCHAIN/lib/golang/bin/go
+  export GOPATH=$PKG_BUILD.gopath:$PKG_BUILD/vendor/
+  export GOROOT=$TOOLCHAIN/lib/golang
   export PATH=$PATH:$GOROOT/bin
 
-  ln -fs $ROOT/$PKG_BUILD $ROOT/$PKG_BUILD/vendor/src/github.com/docker/containerd
+  ln -fs $PKG_BUILD $PKG_BUILD/vendor/src/github.com/docker/containerd
 }
 
 make_target() {
@@ -73,4 +73,3 @@ make_target() {
 makeinstall_target() {
   :
 }
-

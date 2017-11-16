@@ -17,26 +17,20 @@
 ################################################################################
 
 PKG_NAME="bcm2835-bootloader"
-PKG_VERSION="d0bc6ce"
-PKG_REV="1"
+PKG_VERSION="008700b"
+PKG_SHA256="f96620ad3e1d682ff0a15b12f7f0f0bda0e0b8d3802eb948ee7e8202355edb46"
 PKG_ARCH="arm"
 PKG_LICENSE="nonfree"
 PKG_SITE="http://www.broadcom.com"
 PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.xz"
 PKG_DEPENDS_TARGET="toolchain linux"
-PKG_PRIORITY="optional"
 PKG_SECTION="tools"
 PKG_SHORTDESC="bcm2835-bootloader: Tool to create a bootable kernel for RaspberryPi"
 PKG_LONGDESC="bcm2835-bootloader: Tool to create a bootable kernel for RaspberryPi"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 make_target() {
-  if [ -f $DISTRO_DIR/$DISTRO/config/dt-blob.dts ]; then
-    echo Compiling device tree blob
-    $(kernel_path)/scripts/dtc/dtc -O dtb -o dt-blob.bin $DISTRO_DIR/$DISTRO/config/dt-blob.dts
-  fi
+  :
 }
 
 makeinstall_target() {
@@ -45,17 +39,28 @@ makeinstall_target() {
     cp -PRv bootcode.bin $INSTALL/usr/share/bootloader
     cp -PRv fixup_x.dat $INSTALL/usr/share/bootloader/fixup.dat
     cp -PRv start_x.elf $INSTALL/usr/share/bootloader/start.elf
-    [ -f dt-blob.bin ] && cp -PRv dt-blob.bin $INSTALL/usr/share/bootloader/dt-blob.bin
+
+    if [ -f $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/dt-blob.bin ]; then
+      cp -PRv $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/dt-blob.bin $INSTALL/usr/share/bootloader
+    fi
 
     cp -PRv $PKG_DIR/scripts/update.sh $INSTALL/usr/share/bootloader
 
-    if [ -f $DISTRO_DIR/$DISTRO/config/distroconfig.txt ]; then
+    if [ -f $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/distroconfig.txt ]; then
+      cp -PRv $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/distroconfig.txt $INSTALL/usr/share/bootloader
+    elif [ -f $PROJECT_DIR/$PROJECT/config/distroconfig.txt ]; then
+      cp -PRv $PROJECT_DIR/$PROJECT/config/distroconfig.txt $INSTALL/usr/share/bootloader
+    elif [ -f $DISTRO_DIR/$DISTRO/config/distroconfig.txt ]; then
       cp -PRv $DISTRO_DIR/$DISTRO/config/distroconfig.txt $INSTALL/usr/share/bootloader
     else
       cp -PRv $PKG_DIR/files/3rdparty/bootloader/distroconfig.txt $INSTALL/usr/share/bootloader
     fi
 
-    if [ -f $DISTRO_DIR/$DISTRO/config/config.txt ]; then
+    if [ -f $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/config.txt ]; then
+      cp -PRv $PROJECT_DIR/$PROJECT/devices/$DEVICE/config/config.txt $INSTALL/usr/share/bootloader
+    elif [ -f $PROJECT_DIR/$PROJECT/config/config.txt ]; then
+      cp -PRv $PROJECT_DIR/$PROJECT/config/config.txt $INSTALL/usr/share/bootloader
+    elif [ -f $DISTRO_DIR/$DISTRO/config/config.txt ]; then
       cp -PRv $DISTRO_DIR/$DISTRO/config/config.txt $INSTALL/usr/share/bootloader
     else
       cp -PRv $PKG_DIR/files/3rdparty/bootloader/config.txt $INSTALL/usr/share/bootloader

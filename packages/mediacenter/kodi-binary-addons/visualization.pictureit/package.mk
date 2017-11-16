@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="visualization.pictureit"
-PKG_VERSION="66f88ff"
-PKG_REV="1"
+PKG_VERSION="8eb74a6"
+PKG_SHA256="358ced879c541974a4a2dbbaa7c6f633e77adb066bb639bb585e26a50820fd43"
+PKG_REV="2"
 PKG_ARCH="x86_64"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/linuxwhatelse/visualization.pictureit/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="visualization.pictureit"
 PKG_LONGDESC="visualization.pictureit"
@@ -32,19 +32,3 @@ PKG_AUTORECONF="no"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_TYPE="xbmc.player.musicviz"
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
-}

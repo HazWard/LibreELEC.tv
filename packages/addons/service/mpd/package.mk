@@ -19,24 +19,22 @@
 ################################################################################
 
 PKG_NAME="mpd"
-PKG_VERSION="0.19.15"
-PKG_REV="101"
+PKG_VERSION="0.20.9"
+PKG_SHA256="cd77a2869e32354b004cc6b34fcb0bee56114caa2d9ed862aaa8071441e34eb7"
+PKG_REV="103"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://www.musicpd.org"
 PKG_URL="http://www.musicpd.org/download/${PKG_NAME}/${PKG_VERSION%.*}/${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain boost glib ffmpeg libmad libogg flac faad2 curl alsa-lib yajl libid3tag lame"
-PKG_PRIORITY="optional"
 PKG_SECTION="service.multimedia"
 PKG_SHORTDESC="Music Player Daemon (MPD): a free and open Music Player Server"
 PKG_LONGDESC="Music Player Daemon ($PKG_VERSION) is a flexible and powerful server-side application for playing music"
-PKG_AUTORECONF="yes"
+PKG_AUTORECONF="no"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="Music Player Daemon (MPD)"
 PKG_ADDON_TYPE="xbmc.service"
-PKG_ADDON_PROVIDES=""
-PKG_ADDON_REPOVERSION="8.0"
 
 pre_configure_target() {
   export LIBS="$LIBS -logg -lFLAC"

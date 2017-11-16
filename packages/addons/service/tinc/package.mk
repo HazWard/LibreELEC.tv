@@ -1,6 +1,6 @@
 ################################################################################
 #      This file is part of LibreELEC - https://libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,22 +18,21 @@
 
 PKG_NAME="tinc"
 PKG_VERSION="1.1pre14"
-PKG_REV="101"
+PKG_SHA256="e349e78f0e0d10899b8ab51c285bdb96c5ee322e847dfcf6ac9e21036286221f"
+PKG_REV="102"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv2"
 PKG_SITE="http://www.tinc-vpn.org/"
 PKG_URL="${PKG_SITE}/packages/$PKG_NAME-$PKG_VERSION.tar.gz"
-PKG_DEPENDS_TARGET="toolchain libressl lzo zlib"
-PKG_PRIORITY="optional"
+PKG_DEPENDS_TARGET="toolchain openssl lzo zlib"
 PKG_SECTION="service/system"
 PKG_SHORTDESC="tinc: a Virtual Private Network daemon"
 PKG_LONGDESC="tinc ($PKG_VERSION) is a Virtual Private Network (VPN) daemon that uses tunnelling and encryption to create a secure private network between hosts on the Internet. Because the VPN appears to the IP level network code as a normal network device, there is no need to adapt any existing software. This allows VPN sites to share information with each other over the Internet without exposing any information to others."
-PKG_AUTORECONF="yes"
+PKG_AUTORECONF="no"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="tinc"
 PKG_ADDON_TYPE="xbmc.service"
-PKG_ADDON_REPOVERSION="8.0"
 PKG_MAINTAINER="Anton Voyl (awiouy)"
 
 PKG_CONFIGURE_OPTS_TARGET="--disable-curses   \
@@ -42,7 +41,7 @@ PKG_CONFIGURE_OPTS_TARGET="--disable-curses   \
 
 pre_configure_target() {
   # tinc fails to build in subdirs
-  cd $ROOT/$PKG_BUILD
+  cd $PKG_BUILD
   rm -rf .$TARGET_NAME
 }
 

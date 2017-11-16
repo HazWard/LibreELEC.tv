@@ -18,36 +18,24 @@
 
 PKG_NAME="vsxu"
 PKG_VERSION="0.5.1"
-PKG_REV="1"
+PKG_SHA256="6707b230ba6cb28c5b19ec6163722b801dd30afed8f966b57e188761b4d54b8e"
 PKG_ARCH="i386 x86_64"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.vsxu.com"
 # repackaged from https://github.com/vovoid/vsxu/archive/$PKG_VERSION.tar.gz
 PKG_URL="$DISTRO_SRC/$PKG_NAME-$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain $OPENGL libX11 glew glfw zlib libpng libjpeg-turbo freetype"
-PKG_PRIORITY="optional"
 PKG_SECTION="multimedia"
-PKG_SHORTDESC="vsxu:"
-PKG_LONGDESC="vsxu:"
-
-PKG_IS_ADDON="no"
+PKG_SHORTDESC="an OpenGL-based programming environment to visualize music and create graphic effects"
+PKG_LONGDESC="an OpenGL-based programming environment to visualize music and create graphic effects"
 PKG_AUTORECONF="no"
 
 export LDFLAGS="$LDFLAGS -lX11"
 
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_INSTALL_LIBDIR=/usr/lib \
-        -DCMAKE_INSTALL_LIBDIR_NOARCH=/usr/lib \
-        -DCMAKE_INSTALL_PREFIX_TOOLCHAIN=$SYSROOT_PREFIX/usr \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        -DBUILD_SHARED_LIBS=0 \
-	-DVSXU_STATIC=1 \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=1 \
-	-DCMAKE_CXX_FLAGS="-I$SYSROOT_PREFIX/usr/include/freetype2" \
-        ..
-}
+PKG_CMAKE_OPTS_TARGET="-DBUILD_SHARED_LIBS=0 \
+                       -DVSXU_STATIC=1 \
+                       -DCMAKE_POSITION_INDEPENDENT_CODE=1 \
+                       -DCMAKE_CXX_FLAGS=-I$SYSROOT_PREFIX/usr/include/freetype2"
 
 post_makeinstall_target() {
   mkdir -p $SYSROOT_PREFIX/usr/lib/vsxu

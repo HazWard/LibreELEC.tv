@@ -18,9 +18,13 @@
 #  along with OpenELEC.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
+unset _CACHE_PACKAGE_LOCAL _CACHE_PACKAGE_GLOBAL
+
 . config/options $1
 
 show_config
+
+setup_toolchain target
 
 $SCRIPTS/checkdeps
 $SCRIPTS/build toolchain
@@ -63,14 +67,16 @@ if [ -n "$CUSTOM_GIT_HASH" ]; then
   GIT_HASH="$CUSTOM_GIT_HASH"
 fi
 
-TARGET_VERSION="$PROJECT.$TARGET_ARCH-$LIBREELEC_VERSION"
+LIBREELEC_ARCH="${DEVICE:-$PROJECT}.$TARGET_ARCH"
+TARGET_VERSION="$LIBREELEC_ARCH-$LIBREELEC_VERSION"
 IMAGE_NAME="$DISTRONAME-$TARGET_VERSION"
+
 if [ "$DEVEL_VERSION" = "devel" ] ; then
-  IMAGE_NAME="$DISTRONAME-$PROJECT.$TARGET_ARCH-$OS_VERSION-$LIBREELEC_VERSION"
+  IMAGE_NAME="$DISTRONAME-$LIBREELEC_ARCH-$OS_VERSION-$LIBREELEC_VERSION"
 fi
 
-if [ "$PROJECT" == "imx6" -a -n "$SYSTEM" ]; then
-  IMAGE_NAME="$IMAGE_NAME-$SYSTEM"
+if [ -n "$UBOOT_SYSTEM" ]; then
+  IMAGE_NAME="$IMAGE_NAME-$UBOOT_SYSTEM"
 fi
 
 if [ -n "$CUSTOM_IMAGE_NAME" ]; then
@@ -93,10 +99,7 @@ rm -rf $STAMPS_INSTALL
 mkdir -p $INSTALL
 
 # create baselayout
-mkdir -p $INSTALL/bin
 mkdir -p $INSTALL/etc
-mkdir -p $INSTALL/lib
-mkdir -p $INSTALL/sbin
 mkdir -p $INSTALL/dev
 mkdir -p $INSTALL/proc
 mkdir -p $INSTALL/run
@@ -107,10 +110,14 @@ mkdir -p $INSTALL/var
 mkdir -p $INSTALL/flash
 mkdir -p $INSTALL/storage
 ln -sf /var/media $INSTALL/media
+ln -sf /usr/lib $INSTALL/lib
+ln -sf /usr/bin $INSTALL/bin
+ln -sf /usr/sbin $INSTALL/sbin
 
 if [ "$TARGET_ARCH" = "x86_64" -o "$TARGET_ARCH" = "powerpc64" ]; then
-  ln -s /lib $INSTALL/lib64
-  ln -s lib $INSTALL/usr/lib64
+  ln -s /usr/lib $INSTALL/lib64
+  mkdir -p $INSTALL/usr
+  ln -s /usr/lib $INSTALL/usr/lib64
 fi
 
 echo "$TARGET_VERSION" > $INSTALL/etc/release
@@ -120,12 +127,12 @@ echo -e "NAME=\"$DISTRONAME\"" > $INSTALL/etc/os-release
 echo -e "VERSION=\"$LIBREELEC_VERSION\"" >> $INSTALL/etc/os-release
 echo -e "ID=\"libreelec\"" >> $INSTALL/etc/os-release
 echo -e "VERSION_ID=\"$OS_VERSION\"" >> $INSTALL/etc/os-release
-echo -e "PRETTY_NAME=\"$DISTRONAME ($LIBREELEC_BUILD) - Version: $LIBREELEC_VERSION\"" >> $INSTALL/etc/os-release
+echo -e "PRETTY_NAME=\"$DISTRONAME ($LIBREELEC_BUILD): $LIBREELEC_VERSION\"" >> $INSTALL/etc/os-release
 echo -e "HOME_URL=\"https://libreelec.tv\"" >> $INSTALL/etc/os-release
 echo -e "BUG_REPORT_URL=\"$ORIGIN_URL\"" >> $INSTALL/etc/os-release
 echo -e "BUILD_ID=\"$GIT_HASH\"" >> $INSTALL/etc/os-release
-echo -e "OPENELEC_ARCH=\"$PROJECT.$TARGET_ARCH\"" >> $INSTALL/etc/os-release
-echo -e "LIBREELEC_ARCH=\"$PROJECT.$TARGET_ARCH\"" >> $INSTALL/etc/os-release
+echo -e "OPENELEC_ARCH=\"$LIBREELEC_ARCH\"" >> $INSTALL/etc/os-release
+echo -e "LIBREELEC_ARCH=\"$LIBREELEC_ARCH\"" >> $INSTALL/etc/os-release
 echo -e "LIBREELEC_BUILD=\"$LIBREELEC_BUILD\"" >> $INSTALL/etc/os-release
 
 # create /etc/issue
@@ -134,10 +141,7 @@ echo "$GREETING1" >> $INSTALL/etc/issue
 echo "$GREETING2" >> $INSTALL/etc/issue
 echo "$GREETING3" >> $INSTALL/etc/issue
 echo "$GREETING4" >> $INSTALL/etc/issue
-echo "$DISTRONAME ($LIBREELEC_BUILD) Version: $LIBREELEC_VERSION" >> $INSTALL/etc/issue
-if [ "$DEVEL_VERSION" = "devel" ] ; then
-  echo "$DISTRONAME git: $GIT_HASH" >> $INSTALL/etc/issue
-fi
+echo "$DISTRONAME ($LIBREELEC_BUILD): $LIBREELEC_VERSION ($LIBREELEC_ARCH)" >> $INSTALL/etc/issue
 
 ln -sf /etc/issue $INSTALL/etc/motd
 
@@ -174,11 +178,8 @@ $SCRIPTS/install network
 # Remote support
 [ "$REMOTE_SUPPORT" = "yes" ] && $SCRIPTS/install remote
 
-# LCD support
-[ ! "$LCD_DRIVER" = "none" ] && $SCRIPTS/install lcdproc
-
 # Virtual image creation support
-[ "$PROJECT" = Virtual ] && $SCRIPTS/install virtual
+[ "$PROJECT" = "Generic" ] && $SCRIPTS/install virtual
 
 # Installer support
 [ "$INSTALLER_SUPPORT" = "yes" ] && $SCRIPTS/install installer
@@ -203,41 +204,52 @@ if [ -d "$PROJECT_DIR/$PROJECT/filesystem" ]; then
   done
 fi
 
-# run depmod
-MODVER=$(basename $(ls -d $INSTALL/lib/modules/*))
-find $INSTALL/lib/modules/$MODVER/ -name *.ko | \
-  sed -e "s,$INSTALL/lib/modules/$MODVER/,," > $INSTALL/lib/modules/$MODVER/modules.order
-$ROOT/$TOOLCHAIN/bin/depmod -b $INSTALL $MODVER 2> /dev/null
+# copy board related files to filesystem
+if [ -n "$DEVICE" -a -d "$PROJECT_DIR/$PROJECT/devices/$DEVICE/filesystem" ]; then
+  cp -PR $PROJECT_DIR/$PROJECT/devices/$DEVICE/filesystem/* $INSTALL
+  # install device specific systemd services
+  for service in $PROJECT_DIR/$PROJECT/devices/$DEVICE/filesystem/usr/lib/systemd/system/*.service ; do
+    if [ -f "$service" ] ; then
+      enable_service $(basename $service)
+    fi
+  done
+fi
+
+# run depmod for base overlay modules
+MODVER=$(basename $(ls -d $INSTALL/usr/lib/kernel-overlays/base/lib/modules/*))
+find $INSTALL/usr/lib/kernel-overlays/base/lib/modules/$MODVER/ -name *.ko | \
+  sed -e "s,$INSTALL/usr/lib/kernel-overlays/base/lib/modules/$MODVER/,," \
+    > $INSTALL/usr/lib/kernel-overlays/base/lib/modules/$MODVER/modules.order
+$TOOLCHAIN/bin/depmod -b $INSTALL/usr/lib/kernel-overlays/base -a -e -F "$BUILD/linux-$(kernel_version)/System.map" $MODVER
 
 # strip kernel modules
-for MOD in `find $INSTALL/lib/modules/ -type f -name *.ko`; do
+if [ "$TARGET_KERNEL_ARCH" = "arm64" -a "$TARGET_ARCH" = "arm" ]; then
+  STRIP=$TOOLCHAIN/lib/gcc-linaro-aarch64-linux-gnu/bin/aarch64-linux-gnu-strip
+fi
+for MOD in `find $INSTALL/usr/lib/kernel-overlays/ -type f -name *.ko`; do
   $STRIP --strip-debug $MOD
 done
+
+# symlink overlayed modules to /usr/lib/modules
+ln -sT /var/lib/modules $INSTALL/usr/lib/modules
+
+# symlink overlayed firmware to /usr/lib/firmware
+ln -sT /var/lib/firmware $INSTALL/usr/lib/firmware
 
 # make target dir
 mkdir -p $TARGET_IMG
 rm -rf $TARGET_IMG/$IMAGE_NAME.kernel
 
 # copy kernel to target dir
-if [ "$BOOTLOADER" = "bcm2835-bootloader" ]; then
-  echo "injecting DeviceTreeBlobs to kernel..."
-  perl $BUILD/linux-$(kernel_version)/scripts/mkknlimg $BUILD/linux-$(kernel_version)/arch/$TARGET_KERNEL_ARCH/boot/$KERNEL_TARGET $TARGET_IMG/$IMAGE_NAME.kernel
-  echo "...done"
-else
-  cp -PR $BUILD/linux-$(kernel_version)/arch/$TARGET_KERNEL_ARCH/boot/$KERNEL_TARGET $TARGET_IMG/$IMAGE_NAME.kernel
-fi
+cp -PR $BUILD/linux-$(kernel_version)/arch/$TARGET_KERNEL_ARCH/boot/$KERNEL_TARGET $TARGET_IMG/$IMAGE_NAME.kernel
 chmod 0644 $TARGET_IMG/$IMAGE_NAME.kernel
 
-# create squashfs file
-if [ -z "$SQUASHFS_COMPRESSION" ]; then
-  SQUASHFS_COMPRESSION="gzip"
-fi
-
+# create squashfs file, default to gzip if no compression configured
 echo "rm -rf \"$TARGET_IMG/$IMAGE_NAME.system\"" >> $FAKEROOT_SCRIPT
-echo "$ROOT/$TOOLCHAIN/bin/mksquashfs \"$BUILD/image/system\" \"$TARGET_IMG/$IMAGE_NAME.system\" -noappend -comp $SQUASHFS_COMPRESSION" >> $FAKEROOT_SCRIPT
+echo "$TOOLCHAIN/bin/mksquashfs \"$BUILD/image/system\" \"$TARGET_IMG/$IMAGE_NAME.system\" -noappend -comp ${SQUASHFS_COMPRESSION:-gzip}" >> $FAKEROOT_SCRIPT
 
 # run fakeroot
-$ROOT/$TOOLCHAIN/bin/fakeroot -- $FAKEROOT_SCRIPT
+$TOOLCHAIN/bin/fakeroot -- $FAKEROOT_SCRIPT
 rm -rf $FAKEROOT_SCRIPT
 
 # set permissions
@@ -255,34 +267,25 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
 
   # remove n previous created release image
   rm -rf $TARGET_IMG/$IMAGE_NAME.img.gz
+
   if [ -n "$BOOTLOADER" ]; then
 
-    BOOTLOADER_DIR=""
-    if [ -z "$BOOTLOADER_DIR" -a -d $PROJECT_DIR/$PROJECT/packages ]; then
-      BOOTLOADER_DIR=`find $PROJECT_DIR/$PROJECT/packages -type d -name $BOOTLOADER 2>/dev/null`
-    fi
+    BOOTLOADER_DIR="$(get_pkg_directory "$BOOTLOADER")"
 
-    if [ -z "$BOOTLOADER_DIR" -o ! -d "$BOOTLOADER_DIR" ]; then
-      BOOTLOADER_DIR=`find $PACKAGES -type d -name $BOOTLOADER 2>/dev/null`
-    fi
-
-    if [ -d "$BOOTLOADER_DIR"/files ]; then
+    if [ -d $BOOTLOADER_DIR/files ]; then
       cp -R $BOOTLOADER_DIR/files/* $RELEASE_DIR
     fi
 
-    if [ -f $PROJECT_DIR/$PROJECT/bootloader/release ]; then
+    if [ -f $PROJECT_DIR/$PROJECT/devices/$DEVICE/bootloader/release ]; then
+      echo "Running $PROJECT_DIR/$PROJECT/devices/$DEVICE/bootloader/release"
+      . $PROJECT_DIR/$PROJECT/devices/$DEVICE/bootloader/release
+    elif [ -f $PROJECT_DIR/$PROJECT/bootloader/release ]; then
+      echo "Running $PROJECT_DIR/$PROJECT/bootloader/release"
       . $PROJECT_DIR/$PROJECT/bootloader/release
-    elif [ -f "$BOOTLOADER_DIR"/release ]; then
+    elif [ -f $BOOTLOADER_DIR/release ]; then
+      echo "Running $BOOTLOADER_DIR/release"
       . $BOOTLOADER_DIR/release
     fi
-  fi
-
-  # MfgTool2 for TBS Matrix support (add it to .tar)
-  # only for matrix system or all? (one tar for all updates?)
-  if [ "$PROJECT" == "imx6" -a "$SYSTEM" == "matrix" ]; then
-    $SCRIPTS/unpack imx6-mfgtool2-tbs-matrix
-     mkdir -p $RELEASE_DIR/MfgTool2-TBS-Matrix
-     cp -PR $BUILD/imx6-mfgtool2-tbs-matrix-*/* $RELEASE_DIR/MfgTool2-TBS-Matrix
   fi
 
   cp $ROOT/README* $RELEASE_DIR
@@ -322,29 +325,21 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
       KERNEL_NAME="KERNEL"
     fi
 
-    UBOOT_SYSTEM=""
-    if [ "$PROJECT" == "imx6" ]; then
-      if [ -n "$SYSTEM" ]; then
-        UBOOT_SYSTEM="$SYSTEM"
-      else
-        UBOOT_SYSTEM="cuboxi"
-      fi
-    fi
-
     # variables used in image script must be passed
     env \
       PATH="$PATH:/sbin" \
       ROOT="$ROOT" \
+      SCRIPTS="$SCRIPTS" \
       TOOLCHAIN="$TOOLCHAIN" \
       PROJECT_DIR="$PROJECT_DIR" \
       PROJECT="$PROJECT" \
+      DEVICE="$DEVICE" \
       DISTRO="$DISTRO" \
       TARGET_IMG="$TARGET_IMG" \
       IMAGE_NAME="$IMAGE_NAME" \
       BOOTLOADER="$BOOTLOADER" \
       KERNEL_NAME="$KERNEL_NAME" \
       RELEASE_DIR=$RELEASE_DIR \
-      UUID_SYSTEM="$(uuidgen)" \
       UUID_STORAGE="$(uuidgen)" \
       UBOOT_SYSTEM="$UBOOT_SYSTEM" \
       EXTRA_CMDLINE="$EXTRA_CMDLINE" \
@@ -401,6 +396,8 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
     echo "Creating Amlogic ZIP auto-install package"
     pushd sign > /dev/null
     echo --update_package=/sdcard/$IMAGE_NAME-update.zip > factory_update_param.aml
+    echo --wipe_data >> factory_update_param.aml
+    echo --wipe_cache >> factory_update_param.aml
     if [ -f "$INSTALL_SRC_DIR/files/recovery.img" ]; then
       cp $INSTALL_SRC_DIR/files/recovery.img .
     fi
@@ -410,8 +407,8 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
     fi
 
     # copy device tree image if any
-    if [ -f "$ROOT/$INSTALL/usr/share/bootloader/dtb.img" ]; then
-      cp "$ROOT/$INSTALL/usr/share/bootloader/dtb.img" .
+    if [ -f "$INSTALL/usr/share/bootloader/dtb.img" ]; then
+      cp "$INSTALL/usr/share/bootloader/dtb.img" .
     fi
 
     zip -q $TARGET_IMG/$IMAGE_NAME.zip *
@@ -460,8 +457,8 @@ if [ "$1" = "release" -o "$1" = "mkimage" -o "$1" = "amlpkg" -o "$1" = "noobs" ]
     # create System dir
     mkdir -p $RELEASE_DIR/${DISTRONAME}_${PROJECT}/System
 
-    BOOTLOADER_DIR=`find $PACKAGES -type d -name $BOOTLOADER 2>/dev/null`
-    if [ -d "$BOOTLOADER_DIR"/files/3rdparty/bootloader/ ]; then
+    BOOTLOADER_DIR="$(get_pkg_directory "$BOOTLOADER")"
+    if [ -d $BOOTLOADER_DIR/files/3rdparty/bootloader/ ]; then
       cp -PR $BOOTLOADER_DIR/files/3rdparty/bootloader/* $RELEASE_DIR/${DISTRONAME}_${PROJECT}/System
     fi
 

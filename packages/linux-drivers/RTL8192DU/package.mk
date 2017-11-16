@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="RTL8192DU"
-PKG_VERSION="9e7eb15"
-PKG_REV="1"
+PKG_VERSION="5cb0486"
+PKG_SHA256="1506bd7c3e255708aa9fa3cbc103eb26d8b98467647c0b8ed15a45f1281dd070"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/lwfinger/rtl8192du"
@@ -26,13 +26,11 @@ PKG_URL="https://github.com/lwfinger/rtl8192du/archive/$PKG_VERSION.tar.gz"
 PKG_SOURCE_DIR="rtl8192du-$PKG_VERSION*"
 PKG_DEPENDS_TARGET="toolchain linux"
 PKG_NEED_UNPACK="$LINUX_DEPENDS"
-PKG_PRIORITY="optional"
 PKG_SECTION="driver"
 PKG_SHORTDESC="Realtek RTL8192DU Linux 3.x driver"
 PKG_LONGDESC="Realtek RTL8192DU Linux 3.x driver"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
+PKG_IS_KERNEL_PKG="yes"
 
 pre_make_target() {
   unset LDFLAGS
@@ -47,6 +45,6 @@ make_target() {
 }
 
 makeinstall_target() {
-  mkdir -p $INSTALL/lib/modules/$(get_module_dir)/$PKG_NAME
-    cp *.ko $INSTALL/lib/modules/$(get_module_dir)/$PKG_NAME
+  mkdir -p $INSTALL/$(get_full_module_dir)/$PKG_NAME
+    cp *.ko $INSTALL/$(get_full_module_dir)/$PKG_NAME
 }

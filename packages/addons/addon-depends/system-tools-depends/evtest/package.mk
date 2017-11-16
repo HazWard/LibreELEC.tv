@@ -1,6 +1,6 @@
 ################################################################################
-#      This file is part of LibreELEC - http://www.libreelec.tv
-#      Copyright (C) 2016 Team LibreELEC
+#      This file is part of LibreELEC - https://libreelec.tv
+#      Copyright (C) 2016-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,12 @@
 
 PKG_NAME="evtest"
 PKG_VERSION="1.33"
-PKG_REV="0"
+PKG_SHA256="5037d1162f4c407053cd97e85763ba03150a0c35f929ee9bf9a360abd32ef1c1"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://cgit.freedesktop.org/evtest/"
 PKG_URL="http://cgit.freedesktop.org/evtest/snapshot/$PKG_NAME-$PKG_VERSION.tar.bz2"
 PKG_DEPENDS_TARGET="toolchain libxml2"
-PKG_PRIORITY="optional"
 PKG_SECTION="debug/tools"
 PKG_SHORTDESC="evtest: Simple tool for input event debugging."
 PKG_LONGDESC="evtest is a simple tool for input event debugging."

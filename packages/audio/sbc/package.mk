@@ -18,19 +18,22 @@
 
 PKG_NAME="sbc"
 PKG_VERSION="1.3"
-PKG_REV="1"
+PKG_SHA256="4a358581fb57b98e0c1c34606a35343f31f908f57c26659e51495f75e283785d"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.bluez.org/"
 PKG_URL="http://www.kernel.org/pub/linux/bluetooth/sbc-$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"
-PKG_PRIORITY="optional"
 PKG_SECTION="network"
 PKG_SHORTDESC="sbc: standalone SBC library"
 PKG_LONGDESC="standalone SBC library"
+PKG_AUTORECONF="no"
 
-PKG_IS_ADDON="no"
-PKG_AUTORECONF="yes"
+PKG_CONFIGURE_OPTS_TARGET="--enable-static \
+                           --disable-shared \
+                           --disable-tools \
+                           --disable-tester"
 
-PKG_CONFIGURE_OPTS_TARGET="--enable-static --disable-shared \
-         --disable-tools --disable-tester"
+pre_configure_target() {
+  CFLAGS="$CFLAGS -fPIC"
+}

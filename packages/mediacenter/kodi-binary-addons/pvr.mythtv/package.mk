@@ -17,14 +17,14 @@
 ################################################################################
 
 PKG_NAME="pvr.mythtv"
-PKG_VERSION="b1b426f"
-PKG_REV="1"
+PKG_VERSION="d5a6aa3"
+PKG_SHA256="21af28423221148cdd15a5a69261717e9847ee0c976d2da3fba37eea20153584"
+PKG_REV="2"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
-PKG_SITE="http://www.kodi.tv"
-PKG_URL="https://github.com/kodi-pvr/pvr.mythtv/archive/$PKG_VERSION.tar.gz"
+PKG_SITE="https://github.com/janbar/pvr.mythtv"
+PKG_URL="https://github.com/janbar/pvr.mythtv/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"
-PKG_PRIORITY="optional"
 PKG_SECTION=""
 PKG_SHORTDESC="pvr.mythtv"
 PKG_LONGDESC="pvr.mythtv"
@@ -32,19 +32,3 @@ PKG_AUTORECONF="no"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_TYPE="xbmc.pvrclient"
-
-configure_target() {
-  cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_CONF \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_MODULE_PATH=$SYSROOT_PREFIX/usr/lib/kodi \
-        -DCMAKE_PREFIX_PATH=$SYSROOT_PREFIX/usr \
-        ..
-}
-
-addon() {
-  mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/
-  cp -R $PKG_BUILD/.install_pkg/usr/share/kodi/addons/$PKG_NAME/* $ADDON_BUILD/$PKG_ADDON_ID/
-
-  ADDONSO=$(xmlstarlet sel -t -v "/addon/extension/@library_linux" $ADDON_BUILD/$PKG_ADDON_ID/addon.xml)
-  cp -L $PKG_BUILD/.install_pkg/usr/lib/kodi/addons/$PKG_NAME/$ADDONSO $ADDON_BUILD/$PKG_ADDON_ID/
-}

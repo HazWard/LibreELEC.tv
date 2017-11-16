@@ -17,19 +17,16 @@
 ################################################################################
 
 PKG_NAME="vdr-plugin-vnsiserver"
-PKG_VERSION="5f956c0"
-PKG_REV="1"
+PKG_VERSION="615a077"
+PKG_SHA256="7a3fcacd4113d5352a14b7172260da32d1c0621de9e4eb6d3eb0cb64be968154"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/FernetMenta/vdr-plugin-vnsiserver"
 PKG_URL="https://github.com/FernetMenta/vdr-plugin-vnsiserver/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain vdr"
-PKG_PRIORITY="optional"
 PKG_SECTION="multimedia"
 PKG_SHORTDESC="TV"
 PKG_LONGDESC="TV"
-
-PKG_IS_ADDON="no"
 PKG_AUTORECONF="no"
 
 make_target() {
@@ -48,7 +45,7 @@ post_make_target() {
   VDR_APIVERSION=`sed -ne '/define APIVERSION/s/^.*"\(.*\)".*$/\1/p' $VDR_DIR/config.h`
   LIB_NAME=lib${PKG_NAME/-plugin/}
 
-  cp --remove-destination $ROOT/$PKG_BUILD/${LIB_NAME}.so $ROOT/$PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
+  cp --remove-destination $PKG_BUILD/${LIB_NAME}.so $PKG_BUILD/${LIB_NAME}.so.${VDR_APIVERSION}
   $STRIP libvdr-*.so*
 }
 
